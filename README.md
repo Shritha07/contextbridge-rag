@@ -1,72 +1,111 @@
-# RAG-Simplified: A DIY Approach to Retrieval-Augmented Generation 
+# ContextBridge
 
-## Introduction
+### Document Question Answering with Hybrid RAG
 
-This repository contains a simple and customizable implementation of Retrieval-Augmented Generation (RAG) 
-using SQLModel, PostgreSQL with PGVector, and Cohere's embedding model. 
-It accompanies the Medium blog post "Search with RAG: A Simple DIY Approach" 
-offering a step-by-step guide to building your own RAG system. 
+ContextBridge is a Python-based RAG application that transforms text documents into searchable knowledge and generates context-grounded answers using semantic retrieval, keyword search, and large language models.
 
-## Requirements
+**Python · Cohere · PostgreSQL · pgvector · RRF**
 
-- Python 3.7 or higher
-- PostgreSQL with PGVector extension
-- Cohere API key (sign up at [Cohere](https://cohere.com/) to obtain one)
+## Architecture
 
-## Setup Instructions
+```text
+User Query
+    |
+    v
+Cohere Embeddings
+    |
+    +------------------+
+    |                  |
+    v                  v
+Vector Search     Keyword Search
+(pgvector)        (PostgreSQL)
+    |                  |
+    +--------+---------+
+             |
+             v
+       RRF Ranking
+             |
+             v
+      Retrieved Context
+             |
+             v
+       Cohere LLM
+             |
+             v
+       Final Answer
+```
 
-1. Clone the repository:
+## Tech Stack
 
-   ```
-   git clone git@github.com:helmanofer/simple_rag.git
-   ```
+- **Language:** Python 3.11
+- **Embeddings:** Cohere `embed-multilingual-v3.0`
+- **LLM:** Cohere Command A
+- **Database:** PostgreSQL 16 + pgvector
+- **Keyword Search:** PostgreSQL Full-Text Search
+- **Ranking:** Reciprocal Rank Fusion
+- **Containerization:** Docker Compose
 
-2. Install the required Python packages:
+## Getting Started
 
-   ```
-   cd simple_rag
-   pip install -r requirements.txt
-   ```
+```bash
+git clone https://github.com/Shritha07/contextbridge-rag.git
+cd contextbridge-rag
 
-3. Set up your local PostgreSQL database using docker compose:
+python3 -m venv .venv
+source .venv/bin/activate
 
-   ```
-   docker compose up -d
-   ```
+pip install -r requirements.txt
+cp .env.example .env
+```
 
-4. Update the `.env` file with your Cohere API key:
+Configure your Cohere API key and PostgreSQL credentials in `.env`.
 
-   ```.dotenv
-   COHERE_KEY=Your_Cohere_Key
-   ```
+Start the database:
 
-5. You're all set! Now you can start experimenting with the provided code and adapting it to your specific use case.
+```bash
+docker compose up -d
+```
 
-## Usage
+Enable pgvector:
 
-The repository includes the following key components:
+```bash
+docker exec contextbridge-db psql -U contextbridge_user -d contextbridge -c "CREATE EXTENSION IF NOT EXISTS vector;"
+```
 
-- `db_models.py`: Defines the DTO models using SQLModel, including the `Document` class for storing text data and embeddings.
-- `embeddings.py`: Contains the `co_embed` function, which utilizes Cohere's multilingual embedding model to generate embeddings for a list of texts.
-- `search.py`: Implements the search functionality, allowing you to query the database and retrieve relevant documents based on cosine distance.
-- `index.py`: Implements the indexing functionality, allowing you to store documents in the database
+Index a document and ask questions:
 
-## Customization
+```bash
+python index.py rabin.txt
+python search.py "Who were Yitzhak Rabin's children?"
+```
 
-The beauty of this DIY approach is its simplicity and flexibility. You can easily adapt the code to your specific needs:
+## Project Structure
 
-- Adjust the embedding model used in the `co_embed` function to match your requirements.
-- Modify the `Document` class in `document.py` to include additional fields or adjust the embedding dimension.
-- Experiment with different tokenization approaches or text preprocessing techniques to suit your data.
+```text
+contextbridge-rag/
+├── settings.py
+├── db_models.py
+├── embeddings.py
+├── index.py
+├── search.py
+├── rabin.txt
+├── docker-compose.yml
+├── requirements.txt
+└── .env.example
+```
 
-## Contributing
+## Validation
 
-Contributions are welcome! If you have suggestions, improvements, or bug fixes, feel free to open a pull request or create an issue. Please ensure that your contributions adhere to the project's code style and include appropriate documentation.
+- PostgreSQL and pgvector connectivity verified.
+- 38 document chunks indexed successfully.
+- 1024-dimensional embeddings generated.
+- Semantic and keyword retrieval tested.
+- Hybrid ranking and LLM answer generation working.
 
-## License
+*Development validation only; formal accuracy and performance benchmarks are future work.*
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+## Future Improvements
 
---- 
-
-Happy searching, and stay tuned for more exciting NLP adventures!
+- PDF and multi-document support.
+- Citation verification and retrieval evaluation.
+- Web-based chat interface.
